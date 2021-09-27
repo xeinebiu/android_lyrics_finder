@@ -1,5 +1,7 @@
 package com.xeinebiu.lyrics_finder
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
@@ -9,79 +11,109 @@ import java.net.URLEncoder
 
 private fun String.encodeParam(): String = URLEncoder.encode(this, "utf-8")
 
+/**
+ * Find Lyrics of any Song using it's title
+ */
 object LyricsFinder {
+
+    /**
+     * Minimum Length of lyrics required to mark as valid
+     */
     private const val MIN_LENGTH = 100
-    fun find(title: String): String? {
-        val urls = bing("$title lyrics")
-        for (url in urls) {
-            val r = findLyrics(url)
-            if (r != null && r.length > MIN_LENGTH)
-                return r
+
+    /**
+     * Find lyrics of a song with [title]
+     */
+    suspend fun find(title: String): String? = withContext(Dispatchers.IO) {
+        val links = bing("$title lyrics")
+
+        for (link in links) {
+            val lyrics = findLyrics(link)
+
+            if (lyrics != null && lyrics.length > MIN_LENGTH) return@withContext lyrics
         }
-        return null
+
+        null
     }
 
-    private fun findLyrics(url: String): String? {
-        val response = getHttpContent(url)
+    /**
+     * Find the lyrics from the [url]
+     */
+    private suspend fun findLyrics(url: String): String? = withContext(Dispatchers.IO) {
+        val response = getHtmlContent(url)
+
         val elements = Jsoup.parse(response).body().select("*")
+
         var maxBr = 0
         var result: Element? = null
-        for (e in elements) {
-            val brElements = e.children().count { it.tag()?.name.equals("br") }
+
+        elements.forEach { element ->
+            val brElements = element.children().count { it.tag()?.name.equals("br") }
+
             if (brElements > maxBr) {
                 maxBr = brElements
-                result = e
+                result = element
             }
         }
-        if (result != null)
-            return getText(result)
-        return null
+
+        result?.let(::getText)
     }
 
-    private fun getText(parentElement: Element): String? {
-        var result = ""
-        for (child in parentElement.childNodes()) {
+    /**
+     * Retrieve the text content from [element]
+     */
+    private fun getText(element: Element): String {
+        val sb = StringBuilder()
+
+        for (child in element.childNodes()) {
             if (child is TextNode)
-                result += child.text()
+                sb.append(child.text())
 
             if (child is Element) {
                 if (child.tag().name.equals("br", ignoreCase = true))
-                    result += "\n"
+                    sb.append("\n")
 
-                result += getText(child)
+                sb.append(getText(child))
             }
         }
-        return result
+
+        return sb.toString()
     }
 
-    private fun bing(query: String): List<String> {
+    /**
+     * Return a list of Links as result of search on "bing.com"
+     */
+    private suspend fun bing(query: String): List<String> = withContext(Dispatchers.IO) {
         val uri = "https://www.bing.com/search?q=${query.encodeParam()}&go=Search&qs=ds&form=QBRE"
-        val response = getHttpContent(uri)
-        val doc = Jsoup.parse(response)
 
-        return doc.getElementById("b_content")
+        val response = getHtmlContent(uri)
+
+        Jsoup.parse(response)
+            .getElementById("b_content")
             .getElementById("b_results")
             .getElementsByClass("b_algo")
             .flatMap { it.getElementsByTag("h2") }
             .mapNotNull {
-                try {
+                runCatching {
                     val href = it.getElementsByTag("a").attr("href")
-                    if (href.startsWith("http") && !href.contains("https://www.bing.com"))
-                        href
-                    else
-                        null
-                } catch (e: Exception) {
-                    null
-                }
+
+                    if (href.startsWith("http") && !href.contains("https://www.bing.com")) href
+                    else null
+                }.getOrNull()
             }
     }
 
-    private fun getHttpContent(url: String): String {
+    /**
+     * Download the html content of [url]
+     */
+    private suspend fun getHtmlContent(url: String): String = withContext(Dispatchers.IO) {
         val httpURLConnection = URL(url).openConnection() as HttpURLConnection
+
         httpURLConnection.setRequestProperty(
             "User-Agent",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
         )
-        return httpURLConnection.inputStream.bufferedReader().readText()
+
+        httpURLConnection.inputStream.bufferedReader().readText()
     }
 }
