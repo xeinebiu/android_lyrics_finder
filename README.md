@@ -32,5 +32,9 @@ Step 2. Add the dependency
 ```
 
 ### Change logs
+    1.2.0
+        - Update Gradle
+        - Update Kotlin
+        - Convert LyricsFinder from Object to Class
     1.0.0
         - Initial Release
