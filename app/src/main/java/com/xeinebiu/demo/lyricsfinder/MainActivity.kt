@@ -9,9 +9,11 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import com.xeinebiu.lyrics_finder.LyricsFinder
 import kotlinx.coroutines.launch
-import kotlin.coroutines.coroutineContext
 
 class MainActivity : AppCompatActivity() {
+
+    private val lyricsFinder = LyricsFinder()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -25,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         val query = queryInputView.text.toString()
 
         lifecycleScope.launch {
-            val lyrics = LyricsFinder.find(query)
+            val lyrics = lyricsFinder.find(query)
             findViewById<AppCompatTextView>(R.id.lyricsView).text = lyrics
         }
     }

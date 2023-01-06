@@ -9,17 +9,21 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
-private fun String.encodeParam(): String = URLEncoder.encode(this, "utf-8")
-
 /**
  * Find Lyrics of any Song using it's title
  */
-object LyricsFinder {
+class LyricsFinder(
 
     /**
      * Minimum Length of lyrics required to mark as valid
      */
-    private const val MIN_LENGTH = 100
+    private val minLengthForValidLyrics: Int = 100,
+
+    /**
+     * User agent to set on Http Requests
+     */
+    private val userAgent: String = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
+) {
 
     /**
      * Find lyrics of a song with [title]
@@ -30,7 +34,7 @@ object LyricsFinder {
         for (link in links) {
             val lyrics = findLyrics(link)
 
-            if (lyrics != null && lyrics.length > MIN_LENGTH) return@withContext lyrics
+            if (lyrics != null && lyrics.length > minLengthForValidLyrics) return@withContext lyrics
         }
 
         null
@@ -66,12 +70,14 @@ object LyricsFinder {
         val sb = StringBuilder()
 
         for (child in element.childNodes()) {
-            if (child is TextNode)
+            if (child is TextNode) {
                 sb.append(child.text())
+            }
 
             if (child is Element) {
-                if (child.tag().name.equals("br", ignoreCase = true))
+                if (child.tag().name.equals("br", ignoreCase = true)) {
                     sb.append("\n")
+                }
 
                 sb.append(getText(child))
             }
@@ -111,9 +117,11 @@ object LyricsFinder {
 
         httpURLConnection.setRequestProperty(
             "User-Agent",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
+            userAgent
         )
 
         httpURLConnection.inputStream.bufferedReader().readText()
     }
+
+    private fun String.encodeParam(): String = URLEncoder.encode(this, "utf-8")
 }
