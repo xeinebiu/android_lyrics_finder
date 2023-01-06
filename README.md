@@ -26,7 +26,7 @@ Step 2. Add the dependency
 ### Example
 ```kotlin
     fun search(query: String) {
-        val lyrics = LyricsFinder.find(query)
+        val lyrics = LyricsFinder(...args).find(query)
         findViewById<AppCompatTextView>(R.id.lyricsView).text = lyrics
     }
 ```
