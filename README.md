@@ -18,7 +18,7 @@ Add it in your root build.gradle at the end of repositories:
 Step 2. Add the dependency
 
 	dependencies {
-            implementation 'com.github.xeinebiu:android_lyrics_finder:1.2.0'
+            implementation 'com.github.xeinebiu:android_lyrics_finder:1.3.0'
 	}
 
 
@@ -32,6 +32,8 @@ Step 2. Add the dependency
 ```
 
 ### Change logs
+    1.3.0
+        - Update dependencies
     1.2.0
         - Update Gradle
         - Update Kotlin

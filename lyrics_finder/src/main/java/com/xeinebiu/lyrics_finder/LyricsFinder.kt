@@ -22,7 +22,7 @@ class LyricsFinder(
     /**
      * User agent to set on Http Requests
      */
-    private val userAgent: String = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
+    private val userAgent: String = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
 ) {
 
     /**
@@ -103,8 +103,11 @@ class LyricsFinder(
                 runCatching {
                     val href = it.getElementsByTag("a").attr("href")
 
-                    if (href.startsWith("http") && !href.contains("https://www.bing.com")) href
-                    else null
+                    if (href.startsWith("http") && !href.contains("https://www.bing.com")) {
+                        href
+                    } else {
+                        null
+                    }
                 }.getOrNull()
             }
     }
@@ -117,7 +120,7 @@ class LyricsFinder(
 
         httpURLConnection.setRequestProperty(
             "User-Agent",
-            userAgent
+            userAgent,
         )
 
         httpURLConnection.inputStream.bufferedReader().readText()
